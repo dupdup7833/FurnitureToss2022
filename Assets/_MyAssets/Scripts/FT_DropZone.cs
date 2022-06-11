@@ -12,7 +12,7 @@ public class FT_DropZone : MonoBehaviour
     // Transforms to act as start and end markers for the journey.
     public Transform dropZone;
     public GameObject guideGamePiece;
-
+    private Mesh guideGamePieceMesh;
     // Movement speed in units per second.
     public float speed = 1.0F;
 
@@ -22,12 +22,17 @@ public class FT_DropZone : MonoBehaviour
     // Total distance between the markers.
     private float journeyLength;
 
+    private bool objectPlaced = false;
+
+
+
 
     void Start()
     {
         // Keep a note of the time the movement started.
         startTime = Time.time;
         guideGamePiece.SetActive(false);
+        guideGamePieceMesh = guideGamePiece.GetComponent<MeshFilter>().sharedMesh;
         /* foreach (Transform child in transform)
          {
              dropZone = child;
@@ -54,21 +59,22 @@ public class FT_DropZone : MonoBehaviour
         //transform.position = Vector3.Lerp(startMarker.position, endMarker.position, fractionOfJourney);
     }
 
-    private void releaseIt(HVRGrabberBase basestuff, HVRGrabbable grabble) {
-      StartCoroutine(SnapToZone(grabble.gameObject));
-        Debug.Log("HEEHEHEHEHHE");
+    private void releaseIt(HVRGrabberBase basestuff, HVRGrabbable grabble)
+    {
+        StartCoroutine(SnapToZone(grabble.gameObject));
+
     }
 
     private void OnTriggerEnter(Collider other)
     {
         Debug.Log("on trigger enter" + other.gameObject.transform.position);
-        if (other.tag == "FT_GamePiece")
+        if (!objectPlaced && other.tag == "FT_GamePiece" && guideGamePieceMesh == other.GetComponent<MeshFilter>().sharedMesh)
         {
             HVRGrabbable grabbable = other.gameObject.GetComponent<HVRGrabbable>();
-            
+
             if (grabbable != null)
             {
-                grabbable.Released.AddListener(releaseIt);
+
                 Debug.Log("is being held " + grabbable.IsBeingHeld);
                 // it is not held a entering the zone, so snap to drop zone
                 if (!grabbable.IsBeingHeld)
@@ -79,7 +85,8 @@ public class FT_DropZone : MonoBehaviour
                 }
                 else
                 {
-                   guideGamePiece.SetActive(true);
+                    grabbable.Released.AddListener(releaseIt);
+                    guideGamePiece.SetActive(true);
                 }
             }
             else
@@ -91,26 +98,39 @@ public class FT_DropZone : MonoBehaviour
 
     }
 
-    private void OnTriggerExit(Collider other) {
-         if (other.tag == "FT_GamePiece")
+    private void OnTriggerExit(Collider other)
+    {
+        if (!objectPlaced && other.tag == "FT_GamePiece")
         {
-             guideGamePiece.SetActive(false);
+            HVRGrabbable grabbable = other.gameObject.GetComponent<HVRGrabbable>();
+
+            if (grabbable != null)
+            {
+                if (grabbable.IsBeingHeld)
+                {
+                    grabbable.Released.RemoveListener(releaseIt);
+                }
+            }
+            guideGamePiece.SetActive(false);
         }
     }
 
     IEnumerator SnapToZone(GameObject otherGameObject)
     {
         Debug.Log("Snap to Zone");
+        objectPlaced = true;
         Rigidbody rb = otherGameObject.GetComponent<Rigidbody>();
         Destroy(rb);
-        HVRGrabbable grabbable =otherGameObject.GetComponent<HVRGrabbable>();
+        HVRGrabbable grabbable = otherGameObject.GetComponent<HVRGrabbable>();
         Destroy(grabbable);
-        
+
         Vector3 startingPos = otherGameObject.transform.position;
         Quaternion startingRot = otherGameObject.transform.rotation;
+        Vector3 startingScale = otherGameObject.transform.localScale;
         for (float f = 0.0f; f <= 1.0f; f += 0.02f)
         {
             otherGameObject.transform.position = Vector3.Lerp(startingPos, dropZone.position, f);
+            otherGameObject.transform.localScale = Vector3.Lerp(startingScale, guideGamePiece.transform.localScale, f);
             otherGameObject.transform.rotation = Quaternion.Lerp(startingRot, dropZone.rotation, f);
 
             Debug.Log("other object moving" + otherGameObject.transform.position);
