@@ -5,12 +5,13 @@
 using UnityEngine;
 using System.Collections;
 using HurricaneVR.Framework.Core;
+using HurricaneVR.Framework.Core.Grabbers;
 
 public class FT_DropZone : MonoBehaviour
 {
     // Transforms to act as start and end markers for the journey.
     public Transform dropZone;
-    public GameObject gamePiece;
+    public GameObject guideGamePiece;
 
     // Movement speed in units per second.
     public float speed = 1.0F;
@@ -26,7 +27,7 @@ public class FT_DropZone : MonoBehaviour
     {
         // Keep a note of the time the movement started.
         startTime = Time.time;
-        gamePiece.SetActive(false);
+        guideGamePiece.SetActive(false);
         /* foreach (Transform child in transform)
          {
              dropZone = child;
@@ -53,6 +54,10 @@ public class FT_DropZone : MonoBehaviour
         //transform.position = Vector3.Lerp(startMarker.position, endMarker.position, fractionOfJourney);
     }
 
+    private void releaseIt(HVRGrabberBase basestuff, HVRGrabbable grabble) {
+      StartCoroutine(SnapToZone(grabble.gameObject));
+        Debug.Log("HEEHEHEHEHHE");
+    }
 
     private void OnTriggerEnter(Collider other)
     {
@@ -60,8 +65,10 @@ public class FT_DropZone : MonoBehaviour
         if (other.tag == "FT_GamePiece")
         {
             HVRGrabbable grabbable = other.gameObject.GetComponent<HVRGrabbable>();
+            
             if (grabbable != null)
             {
+                grabbable.Released.AddListener(releaseIt);
                 Debug.Log("is being held " + grabbable.IsBeingHeld);
                 // it is not held a entering the zone, so snap to drop zone
                 if (!grabbable.IsBeingHeld)
@@ -72,7 +79,7 @@ public class FT_DropZone : MonoBehaviour
                 }
                 else
                 {
-                    gamePiece.SetActive(true);
+                   guideGamePiece.SetActive(true);
                 }
             }
             else
@@ -87,17 +94,21 @@ public class FT_DropZone : MonoBehaviour
     private void OnTriggerExit(Collider other) {
          if (other.tag == "FT_GamePiece")
         {
-             gamePiece.SetActive(false);
+             guideGamePiece.SetActive(false);
         }
     }
 
     IEnumerator SnapToZone(GameObject otherGameObject)
     {
+        Debug.Log("Snap to Zone");
         Rigidbody rb = otherGameObject.GetComponent<Rigidbody>();
         Destroy(rb);
+        HVRGrabbable grabbable =otherGameObject.GetComponent<HVRGrabbable>();
+        Destroy(grabbable);
+        
         Vector3 startingPos = otherGameObject.transform.position;
         Quaternion startingRot = otherGameObject.transform.rotation;
-        for (float f = 0.0f; f <= 1.0f; f += 0.01f)
+        for (float f = 0.0f; f <= 1.0f; f += 0.02f)
         {
             otherGameObject.transform.position = Vector3.Lerp(startingPos, dropZone.position, f);
             otherGameObject.transform.rotation = Quaternion.Lerp(startingRot, dropZone.rotation, f);
@@ -106,5 +117,6 @@ public class FT_DropZone : MonoBehaviour
             // yield return new WaitForSeconds(.01f);
             yield return null;
         }
+        guideGamePiece.SetActive(false);
     }
 }

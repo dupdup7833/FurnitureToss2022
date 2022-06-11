@@ -98,8 +98,8 @@ BoxCollider:
   m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 1.0006375, y: 2.39279, z: 1.0436068}
-  m_Center: {x: 0.00031876564, y: 0.69639504, z: -0.021803379}
+  m_Size: {x: 1.1079531, y: 1.9853487, z: 1.1806669}
+  m_Center: {x: 0.04106474, y: 0.49267423, z: 0.039744854}
 --- !u!114 &2951870539218565411
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -113,7 +113,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   dropZone: {fileID: 2951870540005278617}
-  gamePiece: {fileID: 4664508242527241500}
+  guideGamePiece: {fileID: 4664508242527241500}
   speed: 1
 --- !u!1 &2951870540005278616
 GameObject:
